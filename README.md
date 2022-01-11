@@ -55,6 +55,7 @@ When you click on the link it will likely prompt you to login. Once you do this,
 
 Now, create a `.env` file. Inside the file set the following keys
 Do not use password for password in a production setting.
+Click Start on the DBMS
 In the neo4j desktop application, click on DBMS you created in your project. A sidebar will open that says:<br>
 `Details | Plugins | Upgrade`<br>
 Your port for the URI is the `Bolt port`
@@ -67,10 +68,12 @@ PASSWORD=password
 ```
 
 ## Usage
-
-run<br>
+Run<br>
 `node ./index.js`
 
+Upon succesful execution of the above command you can click open on the DBMS and run queries.
+Sample query<br>
+`MATCH (n) RETURN n`
 
 
 ## Maintainers
