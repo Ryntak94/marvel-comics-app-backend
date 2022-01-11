@@ -4,9 +4,9 @@ const request = require('request-promise');
 const neo4j = require('neo4j-driver')
 const { query } = require('./helperFunctions/query.js')
 
-const uri = process.env.uri
-const user = process.env.user
-const password = process.env.password
+const uri = process.env.URI
+const user = process.env.USER
+const password = process.env.PASSWORD
 
 
 const driver = neo4j.driver(uri, neo4j.auth.basic(user, password))
