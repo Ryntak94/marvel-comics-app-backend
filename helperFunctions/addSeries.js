@@ -45,6 +45,6 @@ module.exports = function (session, driver, series, comic)  {
                     }
                 })
             })
-        }
+        }   
     })
 }

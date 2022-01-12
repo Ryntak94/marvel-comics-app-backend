@@ -10,6 +10,8 @@ function addCollection(tx, collection, records) {
     }
 }
 
+module.exports.addCollection = addCollection
+
 module.exports.addCollections = function addCollections(session, driver, collections, comic) {
     let newCollections = collections
     if(collections.length > 0)  {

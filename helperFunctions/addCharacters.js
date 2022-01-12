@@ -17,7 +17,7 @@ module.exports.addCharacters = function addCharacters(session, driver, character
         let character = newCharacters.shift()
 
         return session.writeTransaction(tx =>  {
-            return match(tx, character, "Character")
+            return match(tx, character.name, "Character")
         }).then((res)  =>  {
             if(res.records.length === 0)    {
                 

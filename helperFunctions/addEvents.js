@@ -1,7 +1,7 @@
 const addComic = require("./addComic")
 const addRelationship = require("./addRelationship")
+const match = require("./match")
 const matchRelationship = require("./matchRelationship")
-
 function addEvent(tx, event, records)   {
     if(records === 0)   {
         return tx.run(

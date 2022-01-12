@@ -1,7 +1,7 @@
 
 const { addCharacters } = require("./addCharacters")
-const { addCollections } = require("./addCollections")
-const addComic = require("./addComic")
+const { addCollections, addCollection } = require("./addCollections")
+const { addComic } = require("./addComic")
 const { addCreators } = require("./addCreators")
 const { addEvents } = require("./addEvents")
 const addSeries = require("./addSeries")
@@ -13,29 +13,24 @@ module.exports.query = function query(session, driver, comics, number) {
     let comic = newComics.shift()
     console.log(number)
     if(comic.format !== 'Hardcover')    {
-        let format = comic.format === '' ? 'Comic' : comic.format
-        session.writeTransaction(tx =>  {
-            return match(tx, comic.title, format)
-        })
-        .then((res)    =>  {
-            session.writeTransaction(tx =>  {      
-                return addComic(tx, comic, res.records.length)
-            })
+        if(!comic.title.includes("Trade Paperback") || comic.issueNumber === 0) {
+            let format = comic.format === '' ? 'Comic' : comic.format
+            return addComic(session, driver, comic)
             .then(()    =>  {
-                    addSeries(session, driver, comic.series, comic)
+                    return addSeries(session, driver, comic.series, comic)
                     .then(()    =>  {
-                        addCollections(session, driver, comic.collections, comic)
+                        return addCollections(session, driver, comic.collections, comic)
                         .then(()    =>  {
-                            addCreators(session, driver, comic.creators.items, comic)
+                            return addCreators(session, driver, comic.creators.items, comic)
                             .then(()    =>  {
-                                addCharacters(session, driver, comic.characters.items, comic)
+                                return addCharacters(session, driver, comic.characters.items, comic)
                                 .then(()    =>  {
-                                    addStories(session, driver, comic.stories.items, comic)
+                                    return addStories(session, driver, comic.stories.items, comic)
                                     .then(()    =>  {
-                                        addEvents(session, driver, comic.events.items, comic)
+                                        return addEvents(session, driver, comic.events.items, comic)
                                         .then(()    =>  {
                                             if(newComics.length > 0)    {
-                                                query(session, driver, newComics, number+1)
+                                                return query(session, driver, newComics, number+1)
                                             }
                                         }).catch(err  =>  {
                                             console.log(err)
@@ -79,13 +74,20 @@ module.exports.query = function query(session, driver, comics, number) {
                 session.close()
                 driver.close()
             })
-        })
-        .catch(err  =>  {
-            console.log(err)
-            session.close()
-            driver.close()
-        })
+        }   else    {
+            return session.writeTransaction(tx =>  {
+                return match(tx, comic.title, "Collection")
+            })
+            .then(res   =>  {
+                return session.writeTransaction(tx =>  {
+                    return addCollection(tx, [comic.title], res.records.length)
+                })
+            })
+            .then(()    =>  {
+                return query(session, driver, newComics, number+1)
+            })
+        }
     }   else    {
-        query(session, driver, newComics, number+1)
+        return query(session, driver, newComics, number+1)
     }
 }

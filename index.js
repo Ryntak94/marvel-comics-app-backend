@@ -21,18 +21,76 @@ const options = {
         apikey: process.env.PUBLICKEY,
         hash: md5(timestamp+process.env.PRIVATEKEY+process.env.PUBLICKEY),
         limit: 100,
-        creators: 12712
+        titleStartsWith: "Veno"
     },
     json: true,
 }
 
-request(options)
+function requestRecurse(session, driver, offset, settings)    {
+    return request(settings)
     .then(res   =>  {
         let results = res.data.results
-        // console.log(results[0].stories)
-        query(session, driver, results, 0)
+        let total = res.data.total
+        console.log(res.data)
+        return query(session, driver, results, offset)
+        .then(()    =>  {
+            return session.writeTransaction(tx =>  {
+                return tx.run(`
+                MATCH (o:Offset) SET o.value = ${offset+100} RETURN o.value
+                `)
+            })
+            .then((res)    =>  {
+                if(offset <= total)    {
+                    let newSettings = settings
+                    newSettings.qs.offset = res.records[0].get(0).low
+                    return requestRecurse(session, driver, res.records[0].get(0).low, newSettings)
+                }
+            })
+        })
     })
+}
 
+
+session.writeTransaction(tx =>  {
+    return tx.run("MATCH (o:Offset) return o.value")
+})
+.then((res) =>  {
+    if(res.records.length === 0)    {
+        return session.writeTransaction(tx =>  {
+            return tx.run("CREATE (o:Offset {value: 0}) return o.value")
+        })
+        .then((res)    =>  {
+            let offset  =   res.records[0].get(0).low 
+            options.qs.offset = offset
+            return requestRecurse(session, driver, offset, options)
+        })
+    }   else    {
+        let offset  =   res.records[0].get(0).low 
+        options.qs.offset = offset
+        return requestRecurse(session, driver, offset, options)
+
+    }
+})
+// request(options)
+//     .then(res   =>  {
+//         let results = res.data.results
+//         console.log(results)
+//         // results.filter(comic   =>  {
+//         //     return comic.title
+//         // }).map(comic    =>  {
+//         //     let arr = []
+//         //     let title = comic.title
+//         //     let number = title.match(/[#]\d*/) ? title.match(/[#]\d*/)[0] : null
+//         //     if(number)  {
+//         //         console.log(number)
+//         //         arr.push(title.replace(number, "#" + (Number(number.slice(1))-1).toString()))
+//         //         arr.push(title)
+//         //         arr.push(title.replace(number, "#" + (Number(number.slice(1))+1).toString()))
+//         //         console.log(arr)
+//         //     }
+//         // })
+//         query(session, driver, results, 0)
+//     })
 
 
 // Donny Cates ID: 12712
