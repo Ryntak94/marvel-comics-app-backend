@@ -16,6 +16,7 @@ function addComic(session, driver, comic) {
         let urls = comic.urls.filter(url    =>  {
             return url.type === "detail"
         })
+        
         urls = urls.length > 0 ? urls : comic.urls[0]
         return session.writeTransaction(tx  =>  {
             if(res.records.length === 0)    {
@@ -25,7 +26,7 @@ function addComic(session, driver, comic) {
                             (a:Comic {
                                 title:"${comic.title}", 
                                 issueNumber: ${comic.issueNumber}, 
-                                url: "${urls ? urls.url : ''}"
+                                url: "${urls ? urls[0].url : ''}"
                             }) 
                         RETURN a`
                     )
@@ -35,13 +36,14 @@ function addComic(session, driver, comic) {
                             (a:Comic {
                                 title:"${comic.title}", 
                                 issueNumber: ${comic.issueNumber}, 
-                                url: "${urls ? urls.url : ''}",
+                                url: "${urls ? urls[0].url : ''}",
                                 variantId: ${comic.id}
                             }) 
                         RETURN a`
                     )
                 }
             }   else    {
+                let resUrl = res.records[0].get('a').properties.url
                 return tx.run(
                     `MATCH 
                         (a:Comic {
@@ -49,13 +51,14 @@ function addComic(session, driver, comic) {
                         }) 
                     SET 
                         a.issueNumber = ${comic.issueNumber}, 
-                        a.urls = "${urls ? urls.url : ''}", 
+                        a.urls = "${typeof resUrl ===  'string' ? resUrl : urls ? urls[0].url : ''}", 
                         a.series = "${comic.series.name}" 
                     RETURN a`
                 )
             }
         })
         .then(()    =>  {
+            
             if(variantMatch !== null)   {
                 let nonVariantTitle = comic.title.slice(0, variantMatch.index)
                 
@@ -75,7 +78,8 @@ function addComic(session, driver, comic) {
                                 return addRelationship(tx,
                                     {
                                         label: "Comic",
-                                        title: comic.title
+                                        title: comic.title,
+                                        id: comic.id
                                     },
                                     {
                                         label: "Comic",
@@ -90,7 +94,8 @@ function addComic(session, driver, comic) {
                             return matchRelationship(tx,
                                 {
                                     label: "Comic",
-                                    title: comic.title
+                                    title: comic.title,
+                                    id: comic.id
                                 },
                                 {
                                     label: "Comic",
@@ -104,7 +109,8 @@ function addComic(session, driver, comic) {
                                     return addRelationship(tx,
                                         {
                                             label: "Comic",
-                                            title: comic.title
+                                            title: comic.title,
+                                            id: comic.id
                                         },
                                         {
                                             label: "Comic",

@@ -1,5 +1,6 @@
 module.exports  =   function (tx, sub, obj, relationship)    {
-    return tx.run(`
+    if(!sub.id)  {
+        return tx.run(`
         MATCH
             (s:${sub.label}),
             (o:${obj.label})
@@ -7,4 +8,14 @@ module.exports  =   function (tx, sub, obj, relationship)    {
         CREATE (s)-[r:${relationship}]->(o)
         RETURN type(r)
     `)
+    }   else    {
+        return tx.run(`
+        MATCH
+            (s:${sub.label}),
+            (o:${obj.label})
+            WHERE s.title = "${sub.title}" AND o.title = "${obj.title}" AND s.variantId = ${sub.id}
+        CREATE (s)-[r:${relationship}]->(o)
+        RETURN type(r)
+    `)
+    }
 }

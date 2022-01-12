@@ -1,4 +1,4 @@
-module.exports = function (tx, sub, obj, relationship, variant)  {
+module.exports = function (tx, sub, obj, relationship)  {
     if(!sub.id) {
         
         return tx.run(
