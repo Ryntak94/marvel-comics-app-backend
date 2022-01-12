@@ -21,32 +21,31 @@ const options = {
         apikey: process.env.PUBLICKEY,
         hash: md5(timestamp+process.env.PRIVATEKEY+process.env.PUBLICKEY),
         limit: 100,
-        titleStartsWith: "Veno"
     },
     json: true,
 }
 
-function requestRecurse(session, driver, offset, settings, max)    {
+function requestRecurse(session, driver, offset, settings)    {
     return request(settings)
     .then(res   =>  {
         let results = res.data.results
         let total = res.data.total
         console.log(res.data)
         return query(session, driver, results, offset)
-        // .then(()    =>  {
-        //     return session.writeTransaction(tx =>  {
-        //         return tx.run(`
-        //         MATCH (o:Offset) SET o.value = ${offset+100} RETURN o.value
-        //         `)
-        //     })
-        //     .then((res)    =>  {
-        //         if(offset <= total && (max ? offset < max : true))    {
-        //             let newSettings = settings
-        //             newSettings.qs.offset = res.records[0].get(0).low
-        //             return requestRecurse(session, driver, res.records[0].get(0).low, newSettings)
-        //         }
-        //     })
-        // })
+        .then(()    =>  {
+            return session.writeTransaction(tx =>  {
+                return tx.run(`
+                MATCH (o:Offset) SET o.value = ${offset+100} RETURN o.value
+                `)
+            })
+            .then((res)    =>  {
+                if(offset <= total)    {
+                    let newSettings = settings
+                    newSettings.qs.offset = res.records[0].get(0).low
+                    return requestRecurse(session, driver, res.records[0].get(0).low, newSettings)
+                }
+            })
+        })
     })
 }
 
@@ -62,12 +61,12 @@ session.writeTransaction(tx =>  {
         .then((res)    =>  {
             let offset  =   res.records[0].get(0).low 
             options.qs.offset = offset
-            return requestRecurse(session, driver, offset, options, 100)
+            return requestRecurse(session, driver, offset, options)
         })
     }   else    {
         let offset  =   res.records[0].get(0).low 
         options.qs.offset = offset
-        return requestRecurse(session, driver, offset, options, 100)
+        return requestRecurse(session, driver, offset, options)
 
     }
 })
