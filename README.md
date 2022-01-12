@@ -112,6 +112,7 @@ Upon succesful execution of the above command you can click open on the DBMS and
 Sample query<br>
 `MATCH (n) RETURN n`
 
+If you would like to play around with the Request you can modify the options block in index.js and following along with the [Marvel Comics API](https://developer.marvel.com/docs)
 
 ## Maintainers
 
