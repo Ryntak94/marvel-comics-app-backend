@@ -110,7 +110,7 @@ Run<br>
 
 Upon succesful execution of the above command you can click open on the DBMS and run queries.
 Sample query<br>
-`MATCH (n) RETURN n`
+`MATCH (n) RETURN n limit 200`
 
 If you would like to play around with the Request you can modify the options block in index.js and learn from the [Marvel Comics API](https://developer.marvel.com/docs)
 

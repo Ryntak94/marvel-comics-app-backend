@@ -12,7 +12,7 @@ module.exports.query = function query(session, driver, comics, number) {
     let newComics = comics
     let comic = newComics.shift()
     console.log(number)
-    if(comic.format !== 'Hardcover')    {
+    if(comic.format && comic.format !== 'Hardcover')    {
         if(!comic.title.includes("Trade Paperback") || comic.issueNumber === 0) {
             let format = comic.format === '' ? 'Comic' : comic.format
             return addComic(session, driver, comic)
@@ -84,10 +84,14 @@ module.exports.query = function query(session, driver, comics, number) {
                 })
             })
             .then(()    =>  {
-                return query(session, driver, newComics, number+1)
+                if(newComics.length > 0)    {
+                    return query(session, driver, newComics, number+1)
+                }
             })
         }
     }   else    {
-        return query(session, driver, newComics, number+1)
+        if(newComics.length > 0)    {
+                    return query(session, driver, newComics, number+1)
+                }
     }
 }

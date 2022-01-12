@@ -45,10 +45,19 @@ function requestRecurse(session, driver, offset, settings)    {
                     return requestRecurse(session, driver, res.records[0].get(0).low, newSettings)
                 }
             })
+            .catch(err  =>  {
+                console.log(err)
+                return requestRecurse(session,driver,offset, settings)
+            })
+        })
+        .catch(err  =>  {
+            console.log(err)
+            return requestRecurse(session,driver,offset, settings)
         })
     })
     .catch(err  =>  {
         console.log(err)
+        return requestRecurse(session,driver,offset, settings)
     })
 }
 
