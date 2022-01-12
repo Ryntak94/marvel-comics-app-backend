@@ -30,7 +30,7 @@ function requestRecurse(session, driver, offset, settings)    {
     .then(res   =>  {
         let results = res.data.results
         let total = res.data.total
-        console.log(res.data)
+        // console.log(res.data)
         return query(session, driver, results, offset)
         .then(()    =>  {
             return session.writeTransaction(tx =>  {
@@ -46,6 +46,9 @@ function requestRecurse(session, driver, offset, settings)    {
                 }
             })
         })
+    })
+    .catch(err  =>  {
+        console.log(err)
     })
 }
 

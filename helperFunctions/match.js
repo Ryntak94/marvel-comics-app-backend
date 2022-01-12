@@ -8,11 +8,11 @@ module.exports = function (tx, title, dataType, variantId)  {
     }   else    {
         if(typeof title === "object")   {
             return tx.run(
-                `MATCH (a:${dataType.split(" ").join("")}) WHERE a.title = '${title.name.replace("'", "\\'")}' RETURN a`,
+                `MATCH (a:${dataType.split(" ").join("")}) WHERE a.title = '${title.name.replace(/'/g, "\\'")}' RETURN a`,
             )    
         }   else    {
             return tx.run(
-                `MATCH (a:${dataType.split(" ").join("")}) WHERE a.title = '${title.replace("'", "\\'")}' RETURN a`,
+                `MATCH (a:${dataType.split(" ").join("")}) WHERE a.title = '${title.replace(/'/g, "\\'").replace(/"/g, "\"")}' RETURN a`,
             )
         }
     }

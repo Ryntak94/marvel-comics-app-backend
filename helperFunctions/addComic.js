@@ -5,6 +5,7 @@ const matchRelationship = require("./matchRelationship")
 
 function addComic(session, driver, comic) {
     const variantMatch = comic.title.match(/[\\(][\w*\d*\s*]*(Variant)[\w*\d*\s*]*[\\)]/)
+    console.log(comic.title)
     return session.writeTransaction(tx     =>  {
         if(variantMatch !== null) {
             return match(tx, comic.title, "Comic", comic.id)
@@ -60,7 +61,7 @@ function addComic(session, driver, comic) {
         .then(()    =>  {
             
             if(variantMatch !== null)   {
-                let nonVariantTitle = comic.title.slice(0, variantMatch.index)
+                let nonVariantTitle = comic.title.slice(0, variantMatch.index).trim()
                 
                 return session.writeTransaction(tx  =>  {
                     return match(tx, nonVariantTitle, "Comic")

@@ -5,7 +5,7 @@ const matchRelationship = require("./matchRelationship")
 function addCreator(tx, creator, records)    {
     if(records === 0)   {
         return tx.run(
-            `CREATE (a:Creator {title: "${creator.name}", name: "${creator.name}", role: "${creator.role}"})`
+            `CREATE (a:Creator {title: "${creator.name.replace(/"/g, "\'").replace(/”/g, "\'")}", name: "${creator.name.replace(/"/g, "\'").replace(/”/g, "\'")}", role: "${creator.role}"})`
         )
     }
 }
