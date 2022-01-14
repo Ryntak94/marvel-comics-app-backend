@@ -17,7 +17,7 @@ const options = {
         apikey: process.env.PUBLICKEY,
         hash: md5(timestamp+process.env.PRIVATEKEY+process.env.PUBLICKEY),
         limit: 100,
-        offset: 0
+        offset: 0,
     },
     json: true,
 }
@@ -55,17 +55,3 @@ const requestRecurse = (settings    =>  {
 })
 
 requestRecurse(options)
-// const offset = options.qs.offset
-
-// let tenTInc = Math.floor(offset / 10000)*10000
-// let oneTInc = Math.floor(offset / 1000)*1000
-
-// let parent = `${tenTInc+1} - ${tenTInc + 10000}`
-// let child = `${oneTInc+1} - ${oneTInc+1000}`
-
-// console.log(tenTInc, oneTInc)
-// console.log(parent, child)
-    
-    // console.log(file, child, parent)
-
-
