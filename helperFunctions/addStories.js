@@ -6,7 +6,7 @@ const matchRelationship = require("./matchRelationship")
 function addStory(tx, story, records)  {
     if(records === 0)   {
         return tx.run(
-            `CREATE (a:Story {title: "${story.name}", type: "${story.type}"})`
+            `CREATE (a:Story {title: "${story.name.replace(/['"]/g, "\'")}", type: "${story.type}"})`
         )
     }
 }

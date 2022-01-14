@@ -5,7 +5,7 @@ const matchRelationship = require("./matchRelationship")
 function addEvent(tx, event, records)   {
     if(records === 0)   {
         return tx.run(
-            `CREATE (a:Event {title: '${event.name}'})`
+            `CREATE (a:Event {title: "${event.name.replace(/'"/g, "\'")}"})`
         )
     }
 }
