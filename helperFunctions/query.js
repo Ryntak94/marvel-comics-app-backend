@@ -32,7 +32,14 @@ module.exports.query = function query(session, driver, comics, number) {
                     }
                 })
         }   else    {
-            if(!comic.title.includes("Trade Paperback") && !(comic.issueNumber === 0)) {
+            if(
+                !comic.title.includes("Trade Paperback") && 
+                !(comic.issueNumber === 0) && 
+                !comic.title.includes("vol") && 
+                !comic.title.includes("Vol") &&
+                !comic.title.includes("VOL") &&
+                !comic.title.includes("Volume") &&
+                !comic.title.includes("volume")) {
                 return addComic(session, driver, comic)
                 .then(()    =>  {
                         return addSeries(session, driver, comic.series, comic)
