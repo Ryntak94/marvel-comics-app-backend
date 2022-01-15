@@ -1,21 +1,61 @@
-module.exports = function (tx, sub, obj, relationship)  {
-    if(!sub.id) {
-        
-        return tx.run(
-            `MATCH 
-                (s:${sub.label})-[r:${relationship}]->(o:${obj.label})
-            WHERE s.title = "${sub.title.replace(/['"”]/g, "\'")}" AND o.title = "${obj.title.replace(/['"”]/g, "\'")}"
-            RETURN r
-            `,
-        )
-    }   else    {
-        
-        return tx.run(
-            `MATCH 
-                (s:${sub.label})-[r:${relationship}]->(o:${obj.label})
-            WHERE s.title = "${sub.title.replace(/['"”]/g, "\'")}" AND o.title = "${obj.title.replace(/['"”]/g, "\'")}" AND s.variantId = ${sub.id}
-            RETURN r
-            `,
-        )
-    }
+module.exports = function (session, driver, sub, obj, relationship)  {
+    return session.writeTransaction(tx =>  {     
+        if(obj.matchMy === 'title') {
+            return tx.run(
+                `MATCH 
+                    (s:${sub.label})-[r:${relationship}]->(o:${obj.label})
+                WHERE 
+                    s.${sub.matchBy} = "${sub[sub.matchMy]}"
+                AND 
+                    o.${obj.matchBy} = "${obj[obj.matchMy].replace(/['"”]/g, "\'").trim()}"
+                RETURN 
+                    r
+                `,
+            )
+        }
+        if(sub.matchMy === 'title') {
+            return tx.run(
+                `MATCH 
+                    (s:${sub.label})-[r:${relationship}]->(o:${obj.label})
+                WHERE 
+                    s.${sub.matchBy} = "${sub[sub.matchMy].replace(/['"”]/g, "\'").trim()}"
+                AND 
+                    o.${obj.matchBy} = "${obj[obj.matchMy]}"
+                RETURN 
+                    r
+                `,
+            )
+        }
+        if(sub.matchMy === 'title' && obj.matchMy === 'title')  {
+            return tx.run(
+                `MATCH 
+                    (s:${sub.label})-[r:${relationship}]->(o:${obj.label})
+                WHERE 
+                    s.${sub.matchBy} = "${sub[sub.matchMy].replace(/['"”]/g, "\'").trim()}"
+                AND 
+                    o.${obj.matchBy} = "${obj[obj.matchMy].replace(/['"”]/g, "\'").trim()}"
+                RETURN 
+                    r
+                `,
+            )
+        }   else    {
+            return tx.run(
+                `MATCH 
+                    (s:${sub.label})-[r:${relationship}]->(o:${obj.label})
+                WHERE 
+                    s.${sub.matchBy} = "${sub[sub.matchMy]}"
+                AND 
+                    o.${obj.matchBy} = "${obj[obj.matchMy]}"
+                RETURN 
+                    r
+                `,
+            )
+        }
+
+    })
+    .catch(err  =>  {
+        console.log(err)
+        session.close()
+        driver.close()
+    })
 }

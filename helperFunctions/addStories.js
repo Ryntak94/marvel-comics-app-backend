@@ -1,78 +1,78 @@
+const { session } = require("neo4j-driver")
 const addComic = require("./addComic")
 const addRelationship = require("./addRelationship")
+const generalMatch = require("./generalMatch")
 const match = require("./match")
 const matchRelationship = require("./matchRelationship")
 
-function addStory(tx, story, records)  {
-    if(records === 0)   {
+function addStory(session, driver, story, storyId)  {
+    return session.writeTransaction(tx  =>  {
         return tx.run(
-            `CREATE (a:Story {title: "${story.name.replace(/['"]/g, "\'")}", type: "${story.type}"})`
+            `CREATE 
+                (a:Story {
+                    title: "${story.name.replace(/['"]/g, "\'")}",
+                    type: "${story.type}",
+                    marvelId: '${storyId}'
+                })`
         )
-    }
+    })   
 }
 
 module.exports.addStories = function addStories(session, driver, stories, comic) {
     let newStories = stories
     if(stories.length > 0)  {
         let story = newStories.shift()
-
-        return session.writeTransaction(tx =>  {
-            return match(tx, story.name, "Story")
-        }).then((res)  =>  {
-            return session.writeTransaction(tx =>  {
-                addStory(tx, story, res.records.length)
-            })
-            .then(()    =>  {
-                return session.writeTransaction(tx  =>  {
-                    return matchRelationship(tx, {
-                        label: "Comic",
-                        title: comic.title
-                    },
-                    {
-                        label: "Story",
-                        title: story.name
-                    },
-                    "Part_Of_Story")
-                })
-                .then(res   =>  {
-                    if(res.records.length === 0)    {
-                        return session.writeTransaction(tx =>  {
-                            return addRelationship(tx, {
-                                label: "Comic",
-                                title: comic.title
-                            },
-                            {
-                                label: "Story",
-                                title: story.name
-                            },
-                            "Part_Of_Story")
-                        })
-                    }   else    {
-                        return session.writeTransaction(tx  =>  {
-                            tx.run("MATCH (n) RETURN n")
-                        })
-                    }
-                })
-            })
-            .then(()  =>  {
-                if(newStories.length > 0)   {
-                    return addStories(session, driver, newStories, comic)
+        let storyId = Number(story.resourceURI.slice(story.resourceURI.indexOf('stories/')).replace('stories/', ''))
+        return match(session, driver, 'Story', 'marvelId', storyId)
+        .then(res   =>  {
+            if(res.records.length === 0)    {
+                return addStory(session, driver, story, storyId)
+            }
+        })
+        .then(()    =>  {
+            return matchRelationship(session, driver, 
+                {
+                    matchBy: 'marvelId',
+                    matcyMy: 'id',
+                    label: 'Comic',
+                    id: comic.id
+                },
+                {
+                    matchBy: 'marvelId',
+                    matcyMy: 'id',
+                    label: 'Story',
+                    id: storyId
+                }, 
+                'Part_Of_Story'
+            )
+            .then(res   =>  {
+                if(res.records.lenght === 0)    {
+                    return addRelationship(session, driver, 
+                        {
+                            matchBy: 'marvelId',
+                            matcyMy: 'id',
+                            label: 'Comic',
+                            id: comic.id
+                        },
+                        {
+                            matchBy: 'marvelId',
+                            matcyMy: 'id',
+                            label: 'Story',
+                            id: storyId
+                        }, 
+                        'Part_Of_Story'
+                    )
                 }
             })
-            .catch(err  =>  {
-                console.log(err)
-                session.close()
-                driver.close()
+            .then(()    =>  {
+                if(newStories.length > 0)   {
+                    return addStories(session, driver, newStories, comic)
+                }   else    {
+                    return generalMatch(session, driver)
+                }
             })
         })
-        .catch(err  =>  {
-            console.log(err)
-            session.close()
-            driver.close()
-        })
     }   else    {
-        return session.writeTransaction(tx  =>  {
-            return tx.run("MATCH (n) return n")
-        })
+        return generalMatch(session, driver)
     }
 }

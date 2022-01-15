@@ -1,50 +1,79 @@
 const addRelationship = require("./addRelationship")
+const generalMatch = require("./generalMatch")
 const match = require("./match")
 const matchRelationship = require("./matchRelationship")
 
 module.exports = function (session, driver, series, comic)  {
-    return session.writeTransaction((tx) =>  {
-        return match(tx, series.name, 'Series')
-    })
-    .then((res) =>  {
-        if(res.records.length === 0)    {
-            return session.writeTransaction(tx =>  {
-                return tx.run(
-                    `CREATE (a:Series {title: "${series.name}"})`
-                )
-            })
-            .then(()    =>  {
+    let seriesId = Number(series.resourceURI.slice(series.resourceURI.indexOf('series/')).replace('series/', ''))
+    return match(session, driver, 'Series', 'marvelId', seriesId)
+        .then((res) =>  {
+            if(res.records.length === 0)    {
                 return session.writeTransaction(tx =>  {
-                    return matchRelationship(tx, {
+                    return tx.run(
+                        `CREATE 
+                            (s:Series {
+                                title: "${series.name}",
+                                marvelId: "${seriesId}"
+                            })
+                        RETURN
+                            s
+                        `
+                    )
+                })
+                .then(()    =>  {
+                    return addRelationship(session, driver,
+                        {
+                            matchBy: 'marvelId',
+                            matchMy: 'id',
+                            label: "Comic",
+                            id: comic.id
+                        },
+                        {
+                            matchBy: 'marvelId',
+                            matchMy: 'id',
+                            label: "Series",
+                            id: seriesId
+                        },
+                        "Part_Of_Series"
+                    )
+                })
+            }   else    {
+                return matchRelationship(session, driver,
+                    {
+                        matchBy: 'marvelId',
+                        matchMy: 'id',
                         label: "Comic",
-                        title: comic.title
+                        id: comic.id
                     },
                     {
+                        matchBy: 'marvelId',
+                        matchMy: 'id',
                         label: "Series",
-                        title: series.name
+                        id: seriesId
                     },
-                    "Part_Of")
-                })
-                .then((res)    =>  {
-                    if(res.records.length === 0)    {
-                        return session.writeTransaction(tx  =>  {
-                            return addRelationship(tx, {
+                    "Part_Of_Series"
+                )
+                .then(res   =>  {
+                    if (res.records.length === 0)  {
+                        return addRelationship(session, driver,
+                            {
+                                matchBy: 'marvelId',
+                                matchMy: 'id',
                                 label: "Comic",
-                                title: comic.title
+                                id: comic.id
                             },
                             {
+                                matchBy: 'marvelId',
+                                matchMy: 'id',
                                 label: "Series",
-                                title: series.name
+                                id: seriesId
                             },
-                            "Part_Of")
-                        })
+                            "Part_Of_Series"
+                        )
                     }   else    {
-                        return session.writeTransaction(tx  =>  {
-                            tx.run("MATCH (n) RETURN n")
-                        })
+                        return generalMatch(session, driver)
                     }
                 })
-            })
-        }   
-    })
+            }
+        })
 }

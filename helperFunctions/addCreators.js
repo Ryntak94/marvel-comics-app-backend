@@ -1,68 +1,82 @@
 const addRelationship = require("./addRelationship")
+const generalMatch = require("./generalMatch")
 const match = require("./match")
 const matchRelationship = require("./matchRelationship")
 
-function addCreator(tx, creator, records)    {
-    if(records === 0)   {
+function addCreator(session, driver, creator, creatorId)    {
+    return session.writeTransaction(tx  =>  {
         return tx.run(
-            `CREATE (a:Creator {title: "${creator.name.replace(/"/g, "\'").replace(/”/g, "\'")}", name: "${creator.name.replace(/"/g, "\'").replace(/”/g, "\'")}", role: "${creator.role}"})`
+            `CREATE 
+                (c:Creator {
+                    title: "${creator.name.replace(/["”']/g, "\'")}", 
+                    name: "${creator.name.replace(/["”']/g, "\'")}", 
+                    role: "${creator.role}",
+                    marvelId: "${creatorId}"
+                })
+            RETURN
+                c
+            `
         )
-    }
+    })
 }
 
 module.exports.addCreators = function addCreators(session, driver, creators, comic) {
     let newCreators = creators
     if(creators.length > 0) {
         let creator = newCreators.shift()
-        return session.writeTransaction(tx =>  {
-            return match(tx, creator.name, "Creator")
-        }).then((res)  =>  {
-            return session.writeTransaction(tx =>  {
-                addCreator(tx, creator, res.records.length)
-            })
-            .then(()    =>  {
-                return session.writeTransaction(tx  =>  {
-                    return matchRelationship(tx, {
-                        label: "Comic",
-                        title: comic.title
-                    },
-                    {
-                        label: "Creator",
-                        title: creator.name
-                    },
-                    "Created_By")
-                })
-                .then((res)    =>  {
-                    if(res.records.length === 0)  {
-                        return session.writeTransaction(tx  =>  {
-                            addRelationship(tx, {
-                                label: "Comic",
-                                title: comic.title
-                            },
-                            {
-                                label: "Creator",
-                                title: creator.name
-                            },
-                            "Created_By"
-                            )
-                        })
-                    }   else    {
-                        return session.writeTransaction(tx  =>  {
-                            tx.run("MATCH (n) RETURN n")
-                        })
-                    }
-                })
-            })
-            .then(()  =>  {
-                if(newCreators.length > 0)   {
-                    return addCreators(session, driver, newCreators, comic)
+        let creatorId = Number(creator.resourceURI.slice(creator.resourceURI.indexOf('creators/')).replace('creators/', ''))
+        return match(session, driver, "Creator", 'marvelId', creatorId)
+        .then((res)  =>  {
+            if(res.records.length === 0)    {
+                return addCreator(session, driver, creator, creatorId)
+            }   else    {
+                return generalMatch(session, driver)
+            }
+        })
+        .then(()    =>  {
+            return matchRelationship(session, driver, 
+                {
+                    matchBy: 'marvelId',
+                    matchMy: 'id',
+                    label: 'Comic',
+                    id: comic.id
+                },
+                {
+                    matchBy: 'marvelId',
+                    matchMy: 'id',
+                    label: 'Creator',
+                    id: creatorId
+                },
+                'Created_By'
+            )
+            .then(res   =>  {
+                if(res.records.length === 0)    {
+                    return addRelationship(session, driver,
+                        {
+                            matchBy: 'marvelId',
+                            matchMy: 'id',
+                            label: 'Comic',
+                            id: comic.id
+                        },
+                        {
+                            matchBy: 'marvelId',
+                            matchMy: 'id',
+                            label: 'Creator',
+                            id: creatorId
+                        },
+                        'Created_By'
+                    )
+                }   else    {
+                    return generalMatch(session, driver)
                 }
             })
-            .catch(err  =>  {
-                console.log(err)
-                session.close()
-                driver.close()
-            })
+        })
+        .then(()    =>  {
+            if(newCreators.length > 0)  {
+                return addCreators(session, driver, newCreators, comic)
+            }   else    {
+                return generalMatch(session, driver)
+            }
         })
         .catch(err  =>  {
             console.log(err)
@@ -70,8 +84,6 @@ module.exports.addCreators = function addCreators(session, driver, creators, com
             driver.close()
         })
     }   else    {
-        return session.writeTransaction(tx  =>  {
-            return tx.run("MATCH (n) return n")
-        })
+        return generalMatch(session, driver)
     }
 }

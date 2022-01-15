@@ -2,11 +2,15 @@ require('dotenv').config();
 const md5 = require('md5')
 const request = require('request-promise');
 const fs = require('fs');
-const { default: forExport } = require('neo4j-driver-core');
+const neo4j = require('neo4j-driver')
 
 const uri = process.env.URI
 const user = process.env.USER
 const password = process.env.PASSWORD
+
+
+const driver = neo4j.driver(uri, neo4j.auth.basic(user, password))
+const session = driver.session()
 
 const timestamp = Date.now()
 const options = {
@@ -54,4 +58,4 @@ const requestRecurse = (settings    =>  {
     })
 })
 
-requestRecurse(options)
+// requestRecurse(options)

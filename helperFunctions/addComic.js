@@ -1,204 +1,138 @@
-const { session } = require("neo4j-driver")
 const addRelationship = require("./addRelationship")
 const match = require("./match")
 const matchRelationship = require("./matchRelationship")
+const { addVariantRelationships } = require("./addVariantRelationship")
 
 function addComic(session, driver, comic) {
-    const variantMatch = comic.title.match(/[\\(][\w*\d*\s*]*(Variant)[\w*\d*\s*]*[\\)]/)
-    console.log(comic.title)
-    return session.writeTransaction(tx     =>  {
-        if(variantMatch !== null) {
-            return match(tx, comic.title, "Comic", comic.id)
-        }   else    {
-            return match(tx, comic.title, "Comic")
-        }
-    })
+    console.log('here')
+    return match(session, driver, 'Comic', 'marvelId', comic.id)
     .then(res   =>  {
         let urls = comic.urls.filter(url    =>  {
             return url.type === "detail"
         })
         
-        urls = urls.length > 0 ? urls : comic.urls[0]
+        let url = urls.length > 0 ? urls[0].url : comic.urls.length > 0 ? comic.urls[0].url : ''
+
         return session.writeTransaction(tx  =>  {
             if(res.records.length === 0)    {
-                if(variantMatch === null) {
-                    return tx.run(`
-                        CREATE 
-                            (a:Comic {
-                                title:"${comic.title}", 
-                                issueNumber: ${comic.issueNumber}, 
-                                url: "${urls ? urls[0].url : ''}"
-                            }) 
-                        RETURN a`
-                    )
-                }   else    {
-                    return tx.run(`
-                        CREATE 
-                            (a:Comic {
-                                title:"${comic.title}", 
-                                issueNumber: ${comic.issueNumber}, 
-                                url: "${urls ? urls[0].url : ''}",
-                                variantId: ${comic.id}
-                            }) 
-                        RETURN a`
-                    )
-                }
+                return tx.run(`
+                    CREATE 
+                        (a:Comic {
+                            title:"${comic.title}", 
+                            issueNumber: "${comic.issueNumber}", 
+                            url: "${url}",
+                            marvelId: "${comic.id}",
+                            isbn: "${comic.isbn}"
+                        })
+                    RETURN 
+                        a
+                `)
             }   else    {
-                let resUrl = res.records[0].get('a').properties.url
                 return tx.run(
                     `MATCH 
-                        (a:Comic {
-                            title: "${comic.title}"
+                        (n:Comic {
+                            marvelId: "${comic.id}"
                         }) 
                     SET 
-                        a.issueNumber = ${comic.issueNumber}, 
-                        a.urls = "${typeof resUrl ===  'string' ? resUrl : urls ? urls[0].url : ''}", 
-                        a.series = "${comic.series.name}" 
-                    RETURN a`
-                )
+                        n.issueNumber = ${comic.issueNumber}, 
+                        n.urls = "${url}", 
+                        n.series = "${comic.series.name}",
+                        n.isbn = "${comic.isbn}"
+                    RETURN 
+                        n
+                `)
             }
         })
         .then(()    =>  {
-            
-            if(variantMatch !== null)   {
-                let nonVariantTitle = comic.title.slice(0, variantMatch.index).trim()
-                
-                return session.writeTransaction(tx  =>  {
-                    return match(tx, nonVariantTitle, "Comic")
-                })
-                .then((res) =>  {
-                    if(res.records.length === 0)    {
-                            
-                            return addComic(session, driver, {
-                                    title: nonVariantTitle,
-                                    issueNumber: comic.issueNumber,
-                                    urls: []
-                                })
-                        .then(() =>  {
-                            return session.writeTransaction(tx  =>  {
-                                return addRelationship(tx,
+            let issueRegex = /[#]\d*/
+            let issue = comic.title.match(issueRegex) ? comic.title.match(issueRegex)[0] : null
+            let nextIssueTitle = comic.title.replace(issue, `#${(Number(issue.slice(1))+1)}`)
+            let prevIssueTitle = comic.title.replace(issue, `#${(Number(issue.slice(1))-1)}`)
+            return match(session, driver, 'Comic', 'title', nextIssueTitle)
+                .then(res   =>  {
+                    if(res.records.length > 0)  {
+                        return matchRelationship(session, driver, 
+                            {
+                                matchBy: 'marvelId',
+                                matchMy: 'id',
+                                label: "Comic",
+                                id: comic.id
+                            },
+                            {
+                                matchBy: 'title',
+                                matchMy: 'title',
+                                label: "Comic",
+                                title: nextIssueTitle
+                            },
+                            'Next_Issue'
+                        )
+                        .then(res   =>  {
+                            if(res.records.length === 0)    {
+                                return addRelationship(session, driver, 
                                     {
+                                        matchBy: 'marvelId',
+                                        matchMy: 'id',
                                         label: "Comic",
-                                        title: comic.title,
                                         id: comic.id
                                     },
                                     {
+                                        matchBy: 'title',
+                                        matchMy: 'title',
                                         label: "Comic",
-                                        title: nonVariantTitle
+                                        title: nextIssueTitle
                                     },
-                                    "Variant_Of")
-                            })
-                        })
-                    }   else    {
-                        
-                        return session.writeTransaction(tx =>  {
-                            return matchRelationship(tx,
-                                {
-                                    label: "Comic",
-                                    title: comic.title,
-                                    id: comic.id
-                                },
-                                {
-                                    label: "Comic",
-                                    title: nonVariantTitle
-                                },
-                                "Variant_Of")
-                        })
-                        .then((res) =>  {
-                            if(res.records.length === 0)    {
-                                return session.writeTransaction(tx  =>  {
-                                    return addRelationship(tx,
-                                        {
-                                            label: "Comic",
-                                            title: comic.title,
-                                            id: comic.id
-                                        },
-                                        {
-                                            label: "Comic",
-                                            title: nonVariantTitle
-                                        },
-                                        "Variant_Of")
-                                })
+                                    'Next_Issue'
+                                )
                             }
                         })
                     }
                 })
-            }   else    {
-                let title = comic.title
-                let regex = /[#]\d*/
-                let issue = title.match(regex) ? title.match(regex)[0] : null
-                if(issue !== "#1" && issue !== null && !comic.title.includes("#-1"))    {
-                    let prevIssue = title.replace(issue, "#" + (Number(issue.slice(1)) - 1))
-                    return session.writeTransaction(tx =>  {
-                        return match(tx, prevIssue, "Comic")
-                    })
-                    .then((res) =>  {
-                        if(res.records.length === 0)    {
-                            let issueNumber = Number(issue.slice(1)) - 1
-                            return addComic(session, driver, {
-                                title: prevIssue,
-                                issueNumber,
-                                urls: []
-                            })
-                            .then(()    => {
-                                return session.writeTransaction(tx  =>  {
-                                    return addRelationship(tx,
-                                        {
-                                            label: "Comic",
-                                            title: prevIssue
-                                        },
-                                        {
-                                            label: "Comic",
-                                            title: comic.title
-                                        },
-                                        "Next_Issue")
+                .then(()    =>  {
+                    return match(session, driver, 'Comic', 'title', prevIssueTitle)
+                        .then(res   =>  {
+                            if(res.records.length > 0)    {
+                                return matchRelationship(session, driver, 
+                                    {
+                                        matchBy: 'title',
+                                        matchMy: 'title',
+                                        label: "Comic",
+                                        title: prevIssueTitle
+                                    },
+                                    {
+                                        matchBy: 'marvelId',
+                                        matchMy: 'id',
+                                        label: "Comic",
+                                        id: comic.id
+                                    },
+                                    'Next_Issue'
+                                )
+                                .then(res   =>  {
+                                    if(res.records.length === 0)    {
+                                        return addRelationship(session, driver, 
+                                            {
+                                                matchBy: 'title',
+                                                matchMy: 'title',
+                                                label: "Comic",
+                                                title: prevIssueTitle
+                                            },
+                                            {
+                                                matchBy: 'marvelId',
+                                                matchMy: 'id',
+                                                label: "Comic",
+                                                id: comic.id
+                                            },
+                                            'Next_Issue'
+                                        ) 
+                                    }
                                 })
-                            })
-                        }   else    {
-                            return session.writeTransaction(tx  =>  {
-                                return matchRelationship(tx,
-                                    {
-                                        label: "Comic",
-                                        title: prevIssue
-                                    },
-                                    {
-                                        label: "Comic",
-                                        title: comic.title
-                                    },
-                                    "Next_Issue")
-                            })
-                            .then((res)    =>  {
-                                if(res.records.length === 0)    {
-                                    return session.writeTransaction(tx  =>  {
-                                        return addRelationship(tx,
-                                            {
-                                                label: "Comic",
-                                                title: prevIssue
-                                            },
-                                            {
-                                                label: "Comic",
-                                                title: comic.title
-                                            },
-                                            "Next_Issue")
-                                    })
-                                }
-                            })
-                        }
-                    })
-                }
-            }
+                            }
+                        })
+                })
+        })
+        .then(()    =>  {
+            return addVariantRelationships(session, driver, comic)
         })
     })
 }
 
 module.exports.addComic = addComic
-
-// if(urls.length > 0) {
-//     return tx.run(
-//         `CREATE (a:Comic {title: "${comic.title}", issueNumber: ${comic.issueNumber}, url: "${comic.urls[0].url}"}) RETURN a`
-//     )
-// }   else    {
-//     return tx.run(
-//         `CREATE (a:Comic {title: "${comic.title}", issueNumber: ${comic.issueNumber}, url: ""}) RETURN a`
-//     )
-// }
