@@ -68,47 +68,17 @@ PASSWORD=password
 ```
 
 ## Usage
-Please note that this will attempt to copy the entirety of the Marvel Comics API.
-If you do not wish for this to happen, please comment out lines 35 - 48 in index.js by appending each line with `//`
+Please note that this will attempt to copy the entirety of the Marvel Comics API.<br>
+Run to copy all of the API<br>
+`node ./request.js`<br>
+If you do not want to copy the entire API, you can pass in an optional argument as an integer to the command as such<br>
+`node ./request.js 800`<br>
+This will copy the number you set, or all, of the comics from the Marvel API<br>
 
-This means the following block of code
-```
-.then(()    =>  {
-    return session.writeTransaction(tx =>  {
-        return tx.run(`
-            MATCH (o:Offset) SET o.value = ${offset+100} RETURN o.value
-        `)
-    })
-    .then((res)    =>  {
-        if(offset <= total)    {
-            let newSettings = settings
-            newSettings.qs.offset = res.records[0].get(0).low
-            return requestRecurse(session, driver, res.records[0].get(0).low, newSettings)
-        }
-    })
-})
-```
-Should appear as
-```
-// .then(()    =>  {
-//     return session.writeTransaction(tx =>  {
-//         return tx.run(`
-//         MATCH (o:Offset) SET o.value = ${offset+100} RETURN o.value
-//         `)
-//     })
-//     .then((res)    =>  {
-//         if(offset <= total)    {
-//             let newSettings = settings
-//             newSettings.qs.offset = res.records[0].get(0).low
-//             return requestRecurse(session, driver, res.records[0].get(0).low, newSettings)
-//         }
-//     })
-// })
-```
 Run<br>
 `node ./index.js`
 
-Upon succesful execution of the above command you can click open on the DBMS and run queries.
+Upon succesful execution of the above commands you can click open on the DBMS and run queries.<br>
 Sample query<br>
 `MATCH (n) RETURN n limit 200`
 

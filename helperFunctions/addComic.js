@@ -46,6 +46,7 @@ function addComic(session, driver, comic) {
         .then(()    =>  {
             let issueRegex = /[#]\d*/
             let issue = comic.title.match(issueRegex) ? comic.title.match(issueRegex)[0] : null
+            console.log(comic.title)
             let nextIssueTitle = comic.title.replace(issue, `#${(Number(issue.slice(1))+1)}`)
             let prevIssueTitle = comic.title.replace(issue, `#${(Number(issue.slice(1))-1)}`)
             return match(session, driver, 'Comic', 'title', nextIssueTitle)

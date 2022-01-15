@@ -7,7 +7,7 @@ const neo4j = require('neo4j-driver')
 const uri = process.env.URI
 const user = process.env.USER
 const password = process.env.PASSWORD
-
+let max = process.argv[2] || 999999999
 
 const driver = neo4j.driver(uri, neo4j.auth.basic(user, password))
 const session = driver.session()
@@ -44,7 +44,7 @@ const requestRecurse = (settings    =>  {
         fs.existsSync(`jsonFiles/${parent}/${child}`) ? null : fs.mkdirSync(`jsonFiles/${parent}/${child}`)
         fs.writeFileSync(`jsonFiles/${parent}/${child}/${file}`, data)
         console.log(res)
-        if(res.data.total >= offset) {
+        if(res.data.total >= offset && offset < max) {
             let newSettings = settings
             newSettings.qs.offset = offset+100
             requestRecurse(newSettings)
