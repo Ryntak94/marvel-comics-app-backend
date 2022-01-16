@@ -2,6 +2,9 @@ const addRelationship = require("./addRelationship")
 const match = require("./match")
 const matchRelationship = require("./matchRelationship")
 const { addVariantRelationships } = require("./addVariantRelationship")
+const matchComicBySeries = require("./matchComicBySeries")
+const e = require("express")
+const generalMatch = require("./generalMatch")
 
 function addComic(session, driver, comic) {
     console.log('here')
@@ -49,9 +52,10 @@ function addComic(session, driver, comic) {
             console.log(comic.title)
             let nextIssueTitle = comic.title.replace(issue, `#${(Number(issue.slice(1))+1)}`)
             let prevIssueTitle = comic.title.replace(issue, `#${(Number(issue.slice(1))-1)}`)
-            return match(session, driver, 'Comic', 'title', nextIssueTitle)
+            return matchComicBySeries(session, driver, nextIssueTitle, comic.series.name)
                 .then(res   =>  {
                     if(res.records.length > 0)  {
+                        let nextIssueMarvelId = res.records[0]['_fields'][0]
                         return matchRelationship(session, driver, 
                             {
                                 matchBy: 'marvelId',
@@ -60,15 +64,15 @@ function addComic(session, driver, comic) {
                                 id: comic.id
                             },
                             {
-                                matchBy: 'title',
-                                matchMy: 'title',
+                                matchBy: 'marvelId',
+                                matchMy: 'id',
                                 label: "Comic",
-                                title: nextIssueTitle
+                                id: nextIssueMarvelId
                             },
                             'Next_Issue'
                         )
                         .then(res   =>  {
-                            if(res.records.length === 0)    {
+                            if(res.records.length === 0)  {
                                 return addRelationship(session, driver, 
                                     {
                                         matchBy: 'marvelId',
@@ -77,27 +81,34 @@ function addComic(session, driver, comic) {
                                         id: comic.id
                                     },
                                     {
-                                        matchBy: 'title',
-                                        matchMy: 'title',
+                                        matchBy: 'marvelId',
+                                        matchMy: 'id',
                                         label: "Comic",
-                                        title: nextIssueTitle
+                                        id: nextIssueMarvelId
                                     },
                                     'Next_Issue'
                                 )
+                            }   else    {
+                                return generalMatch(session, driver)
                             }
                         })
+                    }   else    {
+                        return generalMatch(session, driver)
                     }
                 })
                 .then(()    =>  {
-                    return match(session, driver, 'Comic', 'title', prevIssueTitle)
+                    return matchComicBySeries(session, driver, prevIssueTitle, comic.series.name)
                         .then(res   =>  {
-                            if(res.records.length > 0)    {
+                            console.log('here2')
+                            if(res.records.length > 0)  {
+                                let prevIssueMarvelId = res.records[0]['_fields'][0]
+                                console.log('here3')
                                 return matchRelationship(session, driver, 
                                     {
-                                        matchBy: 'title',
-                                        matchMy: 'title',
+                                        matchBy: 'marvelId',
+                                        matchMy: 'id',
                                         label: "Comic",
-                                        title: prevIssueTitle
+                                        id: prevIssueMarvelId
                                     },
                                     {
                                         matchBy: 'marvelId',
@@ -108,13 +119,13 @@ function addComic(session, driver, comic) {
                                     'Next_Issue'
                                 )
                                 .then(res   =>  {
-                                    if(res.records.length === 0)    {
+                                    if(res.records.length === 0)  {
                                         return addRelationship(session, driver, 
                                             {
-                                                matchBy: 'title',
-                                                matchMy: 'title',
+                                                matchBy: 'marvelId',
+                                                matchMy: 'id',
                                                 label: "Comic",
-                                                title: prevIssueTitle
+                                                id: prevIssueMarvelId
                                             },
                                             {
                                                 matchBy: 'marvelId',
@@ -123,9 +134,11 @@ function addComic(session, driver, comic) {
                                                 id: comic.id
                                             },
                                             'Next_Issue'
-                                        ) 
+                                        )
                                     }
                                 })
+                            }   else    {
+                                return generalMatch(session, driver)
                             }
                         })
                 })
