@@ -25,7 +25,7 @@ module.exports.addCollections = function addCollections(session, driver, collect
     if(collections.length > 0)  {
         let collection = newCollections.shift()
         let collectionId = Number(collection.resourceURI.slice(collection.resourceURI.indexOf('comics/')).replace('comics/', ''))
-        return match(session, driver, collection, "Collection", 'marvelId', collectionId)
+        return match(session, driver, "Collection", 'marvelId', collectionId)
             .then((res)  =>  {
                 if (res.records.length === 0)  {
                     return addCollection(session, driver, collection, collectionId)

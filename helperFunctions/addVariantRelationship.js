@@ -58,7 +58,7 @@ function addVariantRelationships(session, driver, comic) {
             WHERE
                 v.title
             CONTAINS
-                "${comic.title}"
+                "${comic.title.replace(/["]/g, '\'')}"
             RETURN
                 v
         `)

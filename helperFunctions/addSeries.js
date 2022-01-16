@@ -12,7 +12,7 @@ module.exports = function (session, driver, series, comic)  {
                     return tx.run(
                         `CREATE 
                             (s:Series {
-                                title: "${series.name}",
+                                title: "${series.name.replace(/["]/g, "\'")}",
                                 marvelId: "${seriesId}"
                             })
                         RETURN

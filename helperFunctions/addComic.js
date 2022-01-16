@@ -18,7 +18,7 @@ function addComic(session, driver, comic) {
                 return tx.run(`
                     CREATE 
                         (a:Comic {
-                            title:"${comic.title}", 
+                            title:"${comic.title.replace(/["]/g, "\'")}", 
                             issueNumber: "${comic.issueNumber}", 
                             url: "${url}",
                             marvelId: "${comic.id}",
@@ -36,7 +36,7 @@ function addComic(session, driver, comic) {
                     SET 
                         n.issueNumber = ${comic.issueNumber}, 
                         n.urls = "${url}", 
-                        n.series = "${comic.series.name}",
+                        n.series = "${comic.series.name.replace(/["]/g, "\'")}",
                         n.isbn = "${comic.isbn}"
                     RETURN 
                         n
