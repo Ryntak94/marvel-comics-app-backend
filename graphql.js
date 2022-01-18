@@ -1,7 +1,8 @@
-const { gql, ApolloServer } = require('apollo-server-micro')
+const { gql, ApolloServer } = require('apollo-server')
 const { ApolloServerPluginLandingPageGraphQLPlayground } = require('apollo-server-core')
 const neo4j = require('neo4j-driver')
 const { Neo4jGraphQL } = require('@neo4j/graphql')
+require('dotenv').config();
 
 const user = process.env.NEO4J_USER
 const password = process.env.NEO4J_PASSWORD
@@ -87,16 +88,12 @@ const driver = neo4j.driver(
 
 const neoSchema = new Neo4jGraphQL({typeDefs, driver})
 
-const apolloServer = new ApolloServer({
+const server = new ApolloServer({
     schema: neoSchema.schema,
-    playground: true,
-    introspection: true,
-    plugins: [ApolloServerPluginLandingPageGraphQLPlayground]
 })
 
-const startServer = apolloServer.start()
 
-apolloServer.listen().then(({url}) =>  {
+server.listen().then(({url})    =>  {
     console.log(url)
 })
 //comment

@@ -11,11 +11,13 @@
   "license": "ISC",
   "dependencies": {
     "@neo4j/graphql": "^2.5.5",
+    "apollo-server": "^3.6.2",
     "apollo-server-core": "^3.6.2",
     "apollo-server-micro": "^3.6.2",
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
     "express": "^4.17.2",
+    "graphql": "^16.2.0",
     "knex": "^0.95.15",
     "md5": "^2.3.0",
     "micro": "^9.3.4",
