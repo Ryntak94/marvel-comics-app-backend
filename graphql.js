@@ -96,12 +96,8 @@ const apolloServer = new ApolloServer({
 
 const startServer = apolloServer.start()
 
-export default async function handler(req, res) {
-    await startServer
-
-    await apolloServer.createHandler({
-        path: "/api/graphql"
-    })(req, res)
+apolloServer.listen().then(({url})) =>  {
+    console.log(url)
 }
 
 export const config = {
