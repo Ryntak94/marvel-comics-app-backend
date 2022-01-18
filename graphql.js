@@ -99,9 +99,3 @@ const startServer = apolloServer.start()
 apolloServer.listen().then(({url}) =>  {
     console.log(url)
 })
-
-export const config = {
-    api: {
-        bodyParser: false,
-    },  
-}
