@@ -1,7 +1,7 @@
-import { gql, ApolloServer } from 'apollo-server-micro'
-import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core'
-import neo4j from "neo4j-driver"
-import { Neo4jGraphQL } from '@neo4j/graphql'
+const { gql, ApolloServer } = require('apollo-server-micro')
+const { ApolloServerPluginLandingPageGraphQLPlayground } = require('apollo-server-core')
+const neo4j = require('neo4j-driver')
+const { Neo4jGraphQL } = require('@neo4j/graphql')
 
 const user = process.env.NEO4J_USER
 const password = process.env.NEO4J_PASSWORD
