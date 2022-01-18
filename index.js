@@ -20,7 +20,7 @@ function requestRecurse(session, driver, offset)    {
     let parent = `${tenTInc+1} - ${tenTInc + 10000}`
     let child = `${oneTInc+1} - ${oneTInc+1000}`
     let file = `${offset+1}-${offset+100}.json`
-    let filePath = `jsonFiles/${parent}/${child}/${file}`
+    let filePath = `jsonFiles/post2013/${parent}/${child}/${file}`
     if(fs.existsSync(filePath))    {
         let results = JSON.parse(fs.readFileSync(filePath))
         return query(session, driver, results, offset)

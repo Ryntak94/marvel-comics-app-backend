@@ -12,7 +12,7 @@ function addStory(session, driver, story, storyId)  {
                 (a:Story {
                     title: "${story.name.replace(/['"]/g, "\'")}",
                     type: "${story.type}",
-                    marvelId: '${storyId}'
+                    marvelId: "${storyId}"
                 })`
         )
     })   
@@ -33,30 +33,30 @@ module.exports.addStories = function addStories(session, driver, stories, comic)
             return matchRelationship(session, driver, 
                 {
                     matchBy: 'marvelId',
-                    matcyMy: 'id',
+                    matchMy: 'id',
                     label: 'Comic',
                     id: comic.id
                 },
                 {
                     matchBy: 'marvelId',
-                    matcyMy: 'id',
+                    matchMy: 'id',
                     label: 'Story',
                     id: storyId
                 }, 
                 'Part_Of_Story'
             )
             .then(res   =>  {
-                if(res.records.lenght === 0)    {
+                if(res.records.length === 0)    {
                     return addRelationship(session, driver, 
                         {
                             matchBy: 'marvelId',
-                            matcyMy: 'id',
+                            matchMy: 'id',
                             label: 'Comic',
                             id: comic.id
                         },
                         {
                             matchBy: 'marvelId',
-                            matcyMy: 'id',
+                            matchMy: 'id',
                             label: 'Story',
                             id: storyId
                         }, 

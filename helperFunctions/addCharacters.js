@@ -11,7 +11,7 @@ function addCharacter(session, driver, character, characterId)    {
             `CREATE 
                 (c:Character {
                     title: "${character.name}",
-                    marvelId: '${characterId}'
+                    marvelId: "${characterId}"
                 })
             RETURN
                 c
@@ -37,34 +37,34 @@ module.exports.addCharacters = function addCharacters(session, driver, character
                 return matchRelationship(session, driver, 
                     {
                         matchBy: 'marvelId',
-                        matcyMy: 'id',
-                        label: 'Character',
+                        matchMy: 'id',
+                        label: "Character",
                         id: characterId
                     },
                     {
                         matchBy: 'marvelId',
                         matchMy: 'id',
-                        label: 'Comic',
+                        label: "Comic",
                         id: comic.id
                     },
-                    'Character_In'
+                    "Character_In"
                 )
                 .then(res   =>  {
                     if(res.records.length === 0)    {
                         return addRelationship(session, driver, 
                             {
                                 matchBy: 'marvelId',
-                                matcyMy: 'id',
-                                label: 'Character',
+                                matchMy: 'id',
+                                label: "Character",
                                 id: characterId
                             },
                             {
                                 matchBy: 'marvelId',
                                 matchMy: 'id',
-                                label: 'Comic',
+                                label: "Comic",
                                 id: comic.id
                             },
-                            'Character_In'
+                            "Character_In"
                         )
                     }   else    {
                         return generalMatch(session, driver)

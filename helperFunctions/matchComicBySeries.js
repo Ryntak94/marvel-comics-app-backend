@@ -1,13 +1,12 @@
 module.exports = function (session, driver, title, series)  {
     return session.writeTransaction(tx =>  {
-        console.log(series)
         return tx.run(
             `MATCH 
                 (c:Comic)-[r]->(s:Series) 
             WHERE 
-                c.title = "${title}"
+                c.title = "${title.replace(/['""]/g, "\\'")}"
             AND
-                s.title = "${series}"
+                s.title = "${series.replace(/['""]/g, "\\'")}"
             RETURN 
                 c.marvelId
             `

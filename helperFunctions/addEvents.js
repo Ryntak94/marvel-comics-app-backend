@@ -1,5 +1,6 @@
 const addComic = require("./addComic")
 const addRelationship = require("./addRelationship")
+const generalMatch = require("./generalMatch")
 const match = require("./match")
 const matchRelationship = require("./matchRelationship")
 function addEvent(session, driver, event, eventId)   {
@@ -22,10 +23,13 @@ module.exports.addEvents = function addEvents(session, driver, events, comic) {
     if(events.length > 0)  {
         let event = newEvents.shift()
         let eventId = Number(event.resourceURI.slice(event.resourceURI.indexOf('events/')).replace('events/', ''))
+        console.log('event')
         return match(session, driver, 'Event', 'marvelId', eventId)
         .then(res   =>  {
             if(res.records.length === 0)    {
                 return addEvent(session, driver, event, eventId)
+            }   else    {
+                return generalMatch(session, driver)
             }
         })
         .then(()    =>  {

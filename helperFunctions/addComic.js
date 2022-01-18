@@ -7,7 +7,6 @@ const e = require("express")
 const generalMatch = require("./generalMatch")
 
 function addComic(session, driver, comic) {
-    console.log('here')
     return match(session, driver, 'Comic', 'marvelId', comic.id)
     .then(res   =>  {
         let urls = comic.urls.filter(url    =>  {
@@ -49,7 +48,6 @@ function addComic(session, driver, comic) {
         .then(()    =>  {
             let issueRegex = /[#]\d*/
             let issue = comic.title.match(issueRegex) ? comic.title.match(issueRegex)[0] : null
-            console.log(comic.title)
             let nextIssueTitle = comic.title.replace(issue, `#${(Number(issue.slice(1))+1)}`)
             let prevIssueTitle = comic.title.replace(issue, `#${(Number(issue.slice(1))-1)}`)
             return matchComicBySeries(session, driver, nextIssueTitle, comic.series.name)
@@ -99,10 +97,8 @@ function addComic(session, driver, comic) {
                 .then(()    =>  {
                     return matchComicBySeries(session, driver, prevIssueTitle, comic.series.name)
                         .then(res   =>  {
-                            console.log('here2')
                             if(res.records.length > 0)  {
                                 let prevIssueMarvelId = res.records[0]['_fields'][0]
-                                console.log('here3')
                                 return matchRelationship(session, driver, 
                                     {
                                         matchBy: 'marvelId',

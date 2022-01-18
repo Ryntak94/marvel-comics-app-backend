@@ -22,7 +22,6 @@ module.exports.query = function query(session, driver, comics, number) {
     if(comic.format && comic.format !== 'Hardcover' && !comic.title.includes("Hardcover"))    {
         if(variantMatch !== null)    {
             let nonVariantTitle = comic.title.replace(variantRegex, '').trim()
-            console.log(`'${nonVariantTitle}'`)
             return addVariant(session, driver, comic, nonVariantTitle)
                 .then(()    =>  {
                     if(newComics.length > 0)    {
